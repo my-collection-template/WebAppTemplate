@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using WebAppTemplate.Filters;
 
 namespace WebAppTemplate
 {
@@ -10,8 +11,11 @@ namespace WebAppTemplate
         public static void Register(HttpConfiguration config)
         {
             // Web API configuration and services
+            config.Filters.Add(new AppExceptionFilter());
 
             // Web API routes
+            config.SuppressDefaultHostAuthentication();
+
             config.MapHttpAttributeRoutes();
 
             config.Routes.MapHttpRoute(

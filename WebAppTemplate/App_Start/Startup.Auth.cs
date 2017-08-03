@@ -6,11 +6,17 @@ using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.Google;
 using Owin;
 using WebAppTemplate.Models;
+using Microsoft.Owin.Security.OAuth;
+using WebAppTemplate.Providers;
 
 namespace WebAppTemplate
 {
     public partial class Startup
     {
+        public static OAuthAuthorizationServerOptions OAuthOptions { get; private set; }
+
+        public static string PublicClientId { get; private set; }
+
         // For more information on configuring authentication, please visit https://go.microsoft.com/fwlink/?LinkId=301864
         public void ConfigureAuth(IAppBuilder app)
         {
@@ -44,6 +50,29 @@ namespace WebAppTemplate
             // Once you check this option, your second step of verification during the login process will be remembered on the device where you logged in from.
             // This is similar to the RememberMe option when you log in.
             app.UseTwoFactorRememberBrowserCookie(DefaultAuthenticationTypes.TwoFactorRememberBrowserCookie);
+
+            #region Custom Owin Provider for Web API
+            // Configure the application for OAuth based flow
+            PublicClientId = "self";
+            OAuthOptions = new OAuthAuthorizationServerOptions
+            {
+                // select one of the following provider, the Dummy or the real provider.
+                Provider = new DummyApplicationOAuthProvider(PublicClientId),
+                //Provider = new ApplicationOAuthProvider(PublicClientId),
+                
+                AccessTokenProvider = new CustomAuthenticationTokenProvider(),
+                RefreshTokenProvider = new ApplicationRefreshTokenProvider(),
+
+                TokenEndpointPath = new PathString("/Api/Account/Token"),
+                AuthorizeEndpointPath = new PathString("/api/Account/ExternalLogin"),
+                AccessTokenExpireTimeSpan = TimeSpan.FromDays(60),
+                AllowInsecureHttp = true
+            };
+
+            // Enable the application to use bearer tokens to authenticate users
+            app.UseOAuthBearerTokens(OAuthOptions);
+
+            #endregion
 
             // Uncomment the following lines to enable logging in with third party login providers
             //app.UseMicrosoftAccountAuthentication(
